@@ -3,7 +3,7 @@ project(ndio-series-plugin)
 
 #set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
 
-set(CMAKE_MODULE_PATH  ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+#set(CMAKE_MODULE_PATH  ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 macro(show v)
   message("${v} is ${${v}}")
@@ -16,62 +16,63 @@ set(NDIO_SERIES_TEST_DATA_PATH ${PROJECT_SOURCE_DIR}/test/data)
 configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 include_directories(${PROJECT_BINARY_DIR})
 
-find_package(RE2)
-if(RE2_FOUND)
-  include_directories(${RE2_INCLUDE_DIRS})
-  get_directory_property(ND_SOURCE_DIR PARENT_DIRECTORY)
-  include_directories(${ND_SOURCE_DIR})
+find_package(ND CONFIG PATHS cmake)
+include_directories(${ND_INCLUDE_DIRS})
 
-  ##############################################################################
-  # SOURCE
-  ##############################################################################
+find_package(RE2 CONFIG PATHS cmake)
+include_directories(${RE2_INCLUDE_DIRS})
 
-  file(GLOB SRCS src/*.c src/*.cc)
-  file(GLOB HDRS src/*.h src/*.hh)
+get_directory_property(ND_SOURCE_DIR PARENT_DIRECTORY)
+include_directories(${ND_SOURCE_DIR})
 
-  ##############################################################################
-  # TARGETS
-  ##############################################################################
+##############################################################################
+# SOURCE
+##############################################################################
 
-  add_definitions(-fPIC)
-  add_library(ndio-series MODULE ${SRCS} ${HDRS})
-  target_link_libraries(ndio-series nd libre2)
+file(GLOB SRCS src/*.c src/*.cc)
+file(GLOB HDRS src/*.h src/*.hh)
 
-  ##############################################################################
-  #  Testing
-  ##############################################################################
+##############################################################################
+# TARGETS
+##############################################################################
 
-  find_package(GTEST CONFIG PATHS cmake)
-  file(GLOB TEST_SOURCES test/*.cc)
-  if(GTEST_FOUND)
-    find_package(Threads)
-    enable_testing()
-    include_directories(${PROJECT_SOURCE_DIR})
-    include_directories(${GTEST_INCLUDE_DIR})
-    add_executable(test-ndio-series ${TEST_SOURCES} config.h)
-    target_link_libraries(test-ndio-series
-      ${GTEST_BOTH_LIBRARIES}
-      ${CMAKE_THREAD_LIBS_INIT}
-      nd
-      )
-    add_dependencies(test-ndio-series gtest)
-    gtest_copy_shared_libraries(test-ndio-series)
-    add_test(TestNDIOSeries test-ndio-series)
-    install(TARGETS test-ndio-series RUNTIME DESTINATION bin)
-    gtest_copy_shared_libraries(test-ndio-series)
-  endif()
+add_definitions(-fPIC)
+add_library(ndio-series MODULE ${SRCS} ${HDRS})
+target_link_libraries(ndio-series libre2 ${ND_LIBRARIES})
 
-  ##############################################################################
-  #  Install
-  ##############################################################################
-  install(TARGETS ndio-series
-    EXPORT ndio-series-targets
-    LIBRARY DESTINATION bin/${NDIO_PLUGIN_PATH}
-  )
-  export(TARGETS ndio-series FILE ndio-series-targets.cmake)
-  install(EXPORT ndio-series-targets DESTINATION cmake)
+##############################################################################
+#  Testing
+##############################################################################
 
-endif(RE2_FOUND)
+find_package(GTEST CONFIG PATHS cmake)
+file(GLOB TEST_SOURCES test/*.cc)
+if(GTEST_FOUND)
+  find_package(Threads)
+  enable_testing()
+  include_directories(${PROJECT_SOURCE_DIR})
+  include_directories(${GTEST_INCLUDE_DIR})
+  add_executable(test-ndio-series ${TEST_SOURCES} config.h)
+  target_link_libraries(test-ndio-series
+    ${GTEST_BOTH_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${ND_LIBRARIES}
+    )
+  add_dependencies(test-ndio-series gtest)
+  gtest_copy_shared_libraries(test-ndio-series)
+  add_test(TestNDIOSeries test-ndio-series)
+  install(TARGETS test-ndio-series RUNTIME DESTINATION bin)
+  gtest_copy_shared_libraries(test-ndio-series)
+endif()
+
+##############################################################################
+#  Install
+##############################################################################
+install(TARGETS ndio-series
+  EXPORT ndio-series-targets
+  LIBRARY DESTINATION bin/${NDIO_PLUGIN_PATH}
+)
+export(TARGETS ndio-series FILE ndio-series-targets.cmake)
+install(EXPORT ndio-series-targets DESTINATION cmake)
 
 ################################################################################
 #  Documentation

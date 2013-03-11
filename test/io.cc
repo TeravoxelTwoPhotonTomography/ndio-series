@@ -6,7 +6,7 @@
 */
 
 #include <gtest/gtest.h>
-#include "plugins/ndio-series/config.h"
+#include "config.h"
 #include "nd.h"
 
 #define countof(e) (sizeof(e)/sizeof(*e))
