@@ -12,6 +12,8 @@ set(NDIO_SERIES_TEST_DATA_PATH ${PROJECT_SOURCE_DIR}/test/data)
 configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 include_directories(${PROJECT_BINARY_DIR})
 
+find_package(GTEST CONFIG PATHS cmake)
+
 find_package(ND CONFIG PATHS cmake)
 include_directories(${ND_INCLUDE_DIRS})
 
@@ -32,12 +34,12 @@ file(GLOB HDRS src/*.h src/*.hh)
 add_definitions(-fPIC)
 add_library(ndio-series MODULE ${SRCS} ${HDRS})
 target_link_libraries(ndio-series libre2 ${ND_LIBRARIES})
+add_dependencies(ndio-series nd)
 
 ##############################################################################
 #  Testing
 ##############################################################################
 
-find_package(GTEST CONFIG PATHS cmake)
 file(GLOB TEST_SOURCES test/*.cc)
 if(GTEST_FOUND)
   find_package(Threads)
@@ -50,7 +52,7 @@ if(GTEST_FOUND)
     ${CMAKE_THREAD_LIBS_INIT}
     ${ND_LIBRARIES}
     )
-  add_dependencies(test-ndio-series gtest)
+  add_dependencies(test-ndio-series gtest nd)
   gtest_copy_shared_libraries(test-ndio-series)
   add_test(TestNDIOSeries test-ndio-series)
   install(TARGETS test-ndio-series RUNTIME DESTINATION bin)
