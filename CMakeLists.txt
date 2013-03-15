@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 project(ndio-series-plugin)
 
-#set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR}/install CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
-
-#set(CMAKE_MODULE_PATH  ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-
 macro(show v)
   message("${v} is ${${v}}")
 endmacro()
@@ -21,9 +17,6 @@ include_directories(${ND_INCLUDE_DIRS})
 
 find_package(RE2 CONFIG PATHS cmake)
 include_directories(${RE2_INCLUDE_DIRS})
-
-get_directory_property(ND_SOURCE_DIR PARENT_DIRECTORY)
-include_directories(${ND_SOURCE_DIR})
 
 ##############################################################################
 # SOURCE
@@ -62,17 +55,17 @@ if(GTEST_FOUND)
   add_test(TestNDIOSeries test-ndio-series)
   install(TARGETS test-ndio-series RUNTIME DESTINATION bin)
   gtest_copy_shared_libraries(test-ndio-series)
+  install(FILES ${GTEST_BOTH_LIBRARIES} DESTINATION bin)
 endif()
 
 ##############################################################################
 #  Install
 ##############################################################################
-install(TARGETS ndio-series
-  EXPORT ndio-series-targets
-  LIBRARY DESTINATION bin/${NDIO_PLUGIN_PATH}
-)
-export(TARGETS ndio-series FILE ndio-series-targets.cmake)
-install(EXPORT ndio-series-targets DESTINATION cmake)
+
+foreach(_path ${NDIO_PLUGIN_PATH})
+  install(TARGETS ndio-series LIBRARY DESTINATION ${_path})
+endforeach()
+install(TARGETS ndio-series LIBRARY DESTINATION bin/plugins)
 
 ################################################################################
 #  Documentation
