@@ -55,19 +55,9 @@ if(GTEST_FOUND)
   add_dependencies(test-ndio-series gtest nd)
   gtest_copy_shared_libraries(test-ndio-series)
   add_test(TestNDIOSeries test-ndio-series)
-  install(TARGETS test-ndio-series RUNTIME DESTINATION bin)
+  install(TARGETS test-ndio-series EXPORT ndio-series-targets RUNTIME DESTINATION bin)
   gtest_copy_shared_libraries(test-ndio-series)
-  install(FILES ${GTEST_BOTH_LIBRARIES} DESTINATION bin)
 endif()
-
-##############################################################################
-#  Install
-##############################################################################
-
-foreach(_path ${NDIO_PLUGIN_PATH})
-  install(TARGETS ndio-series LIBRARY DESTINATION ${_path})
-endforeach()
-install(TARGETS ndio-series LIBRARY DESTINATION bin/plugins)
 
 ################################################################################
 #  Documentation
@@ -86,5 +76,17 @@ if(DOXYGEN_FOUND)
     VERBATIM
     )
 endif()
+
+##############################################################################
+#  Install
+##############################################################################
+
+foreach(_path ${NDIO_PLUGIN_PATH})
+  install(TARGETS ndio-series LIBRARY DESTINATION ${_path} )
+endforeach()
+install(TARGETS ndio-series EXPORT ndio-series-targets LIBRARY DESTINATION bin/plugins)
+install(EXPORT ndio-series-targets DESTINATION cmake)
+export(TARGETS ndio-series FILE ndio-series-config-targets.cmake)
+export(PACKAGE ndio-series)
 
 

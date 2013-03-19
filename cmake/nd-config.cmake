@@ -5,6 +5,8 @@
 include(ExternalProject)
 include(FindPackageHandleStandardArgs)
 
+message(STATUS "Configuring nd as an External Project.")
+find_package(nd) # Try one more time
 if(NOT ND_LIBRARIES)
   string(REPLACE ";" "^^" SEP_GTEST_BOTH_LIBRARIES "${GTEST_BOTH_LIBRARIES}")
 
