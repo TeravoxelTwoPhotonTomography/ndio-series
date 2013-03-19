@@ -44,7 +44,27 @@ if(NOT GTEST_INCLUDE_DIR) #if this is set, assume gtest location has been overri
   endif()
   set(GTEST_BOTH_LIBRARIES ${GTEST_LIBRARY} ${GTEST_MAIN_LIBRARY})
   set(GTEST_INCLUDE_DIR ${SOURCE_DIR}/include)
+
+
+
+  ### INSTALL
+  if(NOT TARGET install-gtest)
+    add_custom_target(install-gtest DEPENDS ${GTEST_SHARED_LIBRARIES})
+  endif()
+  foreach(lib libgtest libgtest-main)
+    get_target_property(loc ${lib} LOCATION)  
+    if(MSVC)
+      string(REPLACE ${CMAKE_CFG_INTDIR} Debug   loc_debug   ${loc})
+      string(REPLACE ${CMAKE_CFG_INTDIR} Release loc_release ${loc})
+    else()
+      set(loc_debug   ${loc})
+      set(loc_release ${loc})
+    endif()
+    install(FILES ${loc_debug}   DESTINATION bin CONFIGURATIONS Debug)
+    install(FILES ${loc_release} DESTINATION bin CONFIGURATIONS Release)
+  endforeach()
 endif()
+
 find_package_handle_standard_args(GTEST DEFAULT_MSG
   GTEST_BOTH_LIBRARIES
   GTEST_INCLUDE_DIR
@@ -56,20 +76,3 @@ macro(gtest_copy_shared_libraries _target)
       COMMAND ${CMAKE_COMMAND};-E;copy;${_lib};$<TARGET_FILE_DIR:${_target}>)  
   endforeach()
 endmacro()
-
-### INSTALL
-if(NOT TARGET install-gtest)
-  add_custom_target(install-gtest DEPENDS ${GTEST_SHARED_LIBRARIES})
-endif()
-foreach(lib libgtest libgtest-main)
-  get_target_property(loc ${lib} IMPORTED_LOCATION)  
-  if(MSVC)
-    string(REPLACE ${CMAKE_CFG_INTDIR} Debug   loc_debug   ${loc})
-    string(REPLACE ${CMAKE_CFG_INTDIR} Release loc_release ${loc})
-  else()
-    set(loc_debug   ${loc})
-    set(loc_release ${loc})
-  endif()
-  install(FILES ${loc_debug}   DESTINATION bin CONFIGURATIONS Debug)
-  install(FILES ${loc_release} DESTINATION bin CONFIGURATIONS Release)
-endforeach()

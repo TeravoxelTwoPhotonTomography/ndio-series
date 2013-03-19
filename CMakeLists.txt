@@ -82,11 +82,11 @@ endif()
 ##############################################################################
 
 foreach(_path ${NDIO_PLUGIN_PATH})
-  install(TARGETS ndio-series LIBRARY DESTINATION ${_path} )
+  install(TARGETS ndio-series EXPORT ndio-series-targets LIBRARY DESTINATION ${_path} )
 endforeach()
-install(TARGETS ndio-series EXPORT ndio-series-targets LIBRARY DESTINATION bin/plugins)
+#install(TARGETS ndio-series EXPORT ndio-series-targets LIBRARY DESTINATION bin/plugins)
 install(EXPORT ndio-series-targets DESTINATION cmake)
-export(TARGETS ndio-series FILE ndio-series-config-targets.cmake)
+export(TARGETS ndio-series FILE ndio-series-config.cmake)
 export(PACKAGE ndio-series)
 
 

@@ -6,7 +6,6 @@ include(ExternalProject)
 include(FindPackageHandleStandardArgs)
 
 message(STATUS "Configuring nd as an External Project.")
-find_package(nd) # Try one more time
 if(NOT ND_LIBRARIES)
   string(REPLACE ";" "^^" SEP_GTEST_BOTH_LIBRARIES "${GTEST_BOTH_LIBRARIES}")
 
@@ -40,11 +39,18 @@ if(NOT ND_LIBRARIES)
     )
   add_dependencies(libnd-tests libnd)
 
+
   find_package(CUDA 4.0)
+
+  if(WIN32)   # Windows shell lightweight utility functions - for plugin search
+    find_library(SHLWAPI Shlwapi.lib) 
+  else()
+    set(SHLWAPI)
+  endif()
   
   get_property(ND_LIBRARY TARGET nd PROPERTY LOCATION)
   set(ND_INCLUDE_DIRS  ${ND_INCLUDE_DIR} ${CUDA_INCLUDE_DIRS})
-  set(ND_LIBRARIES     ${ND_LIBRARY} ${CUDA_LIBRARIES})
+  set(ND_LIBRARIES     ${ND_LIBRARY} ${CUDA_LIBRARIES} ${SHLWAPI})
 endif()
 
 ### Handle components
