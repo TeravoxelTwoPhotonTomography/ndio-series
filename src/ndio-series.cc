@@ -227,7 +227,8 @@ struct series_t
    * \returns true on success, otherwise false.   
    */
   bool parse(const std::string& name, TPos& pos)
-  { TRY(isok()); 
+  { bool ret=false;
+    TRY(isok()); 
     { unsigned p[10];
       RE2::Arg *args[10];
       TRY(ndim_<countof(args));
@@ -243,10 +244,11 @@ struct series_t
         pos.reserve(ndim_);
         for(unsigned i=0;i<ndim_;++i)
           pos.push_back(p[i]);
-        return true;
+        ret=true;
       }
       for(unsigned i=0;i<ndim_;++i)
         delete args[i];
+      return ret;
     }
 Error:
     return false;
@@ -410,8 +412,10 @@ Error:
         if(parse(ent->d_name,pos))
           seektable_[pos]=ent->d_name;
       }
+      closedir(dir);
       return true;
 Error:
+      if(dir) closedir(dir);
       return false;
     }
 };
@@ -606,7 +610,7 @@ static unsigned series_seek(ndio_t file, nd_t dst, size_t *pos)
   std::string outname;
   TPos mn,mx;
   ndio_t t=0;
-  size_t *shape;
+  size_t *shape=0;
   size_t odim=ndndim(dst);
   ALLOCA(size_t,shape,ndndim(dst));
   memcpy(shape,ndshape(dst),ndndim(dst)*sizeof(size_t)); // save dst shape
@@ -620,16 +624,16 @@ static unsigned series_seek(ndio_t file, nd_t dst, size_t *pos)
               pos+self->fdim_+self->ndim_);
   vadd(ipos,mn);
   TRY(self->find(outname,ipos));
-  { TRY(t=ndioOpen(outname.c_str(),NULL,"r"));
-    TRY(ndreshape(dst,(unsigned)(self->fdim_),ndshape(dst))); // temporarily lower dimension
-    TRY(ndioReadSubarray(t,dst,pos,NULL));
-    ndioClose(t);t=0;
-    TRY(ndreshape(dst,(unsigned)odim,ndshape(dst))); // restore dimensionality
-  }
-  memcpy(ndshape(dst),shape,ndndim(dst)*sizeof(size_t)); // restore dst shape
+  
+  TRY(t=ndioOpen(outname.c_str(),NULL,"r"));
+  TRY(ndreshape(dst,(unsigned)(self->fdim_),ndshape(dst))); // temporarily lower dimension
+  TRY(ndioReadSubarray(t,dst,pos,NULL));
+  ndioClose(t);t=0;
+  TRY(ndreshape(dst,(unsigned)odim,shape)); // restore dimensionality and shape  
+  
   return 1;
 Error:
-  memcpy(ndshape(dst),shape,ndndim(dst)*sizeof(size_t)); // restore dst shape
+  if(shape) ndreshape(dst,(unsigned)odim,shape);
   if(ndioError(t))
   { LOG("\t[Sub file error]"ENDL "\t\tFile: %s"ENDL "\t\t%s"ENDL,
         outname.c_str(),ndioError(t));
