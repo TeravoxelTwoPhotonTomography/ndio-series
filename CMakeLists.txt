@@ -60,7 +60,7 @@ if(GTEST_FOUND)
   add_dependencies(test-ndio-series gtest nd)
   gtest_copy_shared_libraries(test-ndio-series)
   add_test(TestNDIOSeries test-ndio-series)
-  install(TARGETS test-ndio-series EXPORT ndio-series-targets RUNTIME DESTINATION bin)
+  install(TARGETS test-ndio-series EXPORT ndio-series-targets RUNTIME DESTINATION bin/test)
   gtest_copy_shared_libraries(test-ndio-series)
 endif()
 
