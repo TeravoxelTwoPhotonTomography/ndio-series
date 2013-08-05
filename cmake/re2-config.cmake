@@ -14,7 +14,7 @@ endif()
 if(NOT TARGET re2)
   ExternalProject_Add(re2
     URL     http://dl.dropbox.com/u/782372/Software/re2.zip
-    URL_MD5 02ef3dc07e72033ca14fc3d59259182b
+    URL_MD5 d60fbd4f7d5c1eb81a761189df8917d8
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
                -DCMAKE_BUILD_TYPE:STRING=${CMAKE_BUILD_TYPE}
                -DCMAKE_CXX_FLAGS:STRING=${FLAGS}
