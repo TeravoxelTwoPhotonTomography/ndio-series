@@ -3,8 +3,8 @@
  * An ndio plugin for reading file series.
  *
  * Many common image formats are only good up to two-dimensions plus a limited
- * number of colors which confounds the storage of higher dimensional data; 
- * video formats have similar problems.  However they have the advantage of 
+ * number of colors which confounds the storage of higher dimensional data;
+ * video formats have similar problems.  However they have the advantage of
  * being common!  It's easy to inspect those image and video files.
  *
  * This plugin helps support those formats by reading/writing a series of files
@@ -18,10 +18,10 @@
    myfile.001.001.mp4
    \endverbatim
  *
- * The <tt>.###.</tt> pattern represents the index on a dimension.  There are 
+ * The <tt>.###.</tt> pattern represents the index on a dimension.  There are
  * two such fields in the filenames above, and each represents a dimension.
  * Each individual file holds 3-dimensions worth of data, and two extra
- * dimensions are given by the file series.  So these files represent our 5D 
+ * dimensions are given by the file series.  So these files represent our 5D
  * array.
  *
  * \todo Allow elements of the path to enumerate a dimension, as opposed to
@@ -70,7 +70,7 @@
 #define SAFEFREE(e)           if(e){free(e); (e)=NULL;}
 #define HERE                  LOG("HERE -- %s(%d): %s()"ENDL,__FILE__,__LINE__,__FUNCTION__)
 void breakme() {}
-/// @endcond 
+/// @endcond
 
 //
 //  === HELPERS ===
@@ -141,7 +141,7 @@ static ndio_t openfile(const std::string& path, const char* fname)
     and \a fname.
 */
 static nd_t get_file_shape(const std::string& path, const char* fname)
-{ nd_t shape=0; 
+{ nd_t shape=0;
   ndio_t file=0;
   TRY(file=openfile(path,fname));
   shape=ndioShape(file);
@@ -157,7 +157,7 @@ Error:
 /**
  * File context for ndio-series.
  */
-struct series_t 
+struct series_t
 {
   std::string path_,     ///< the folder to search/put files
               pattern_;  ///< the filename pattern, should not include path elements
@@ -206,8 +206,8 @@ struct series_t
       std::cout << "  INPUT: "<<path<<std::endl
                 << "   PATH: "<<path_<<std::endl
                 << "PATTERN: "<<pattern_<<std::endl
-                << "   NDIM: "<<ndim_<<std::endl; 
-#endif                
+                << "   NDIM: "<<ndim_<<std::endl;
+#endif
     }
   Error:
     ;
@@ -217,17 +217,17 @@ struct series_t
   bool isok() { return ndim_>0; }
 
   /**
-   * Parse \a name according to \a pattern_ to extract the position of 
+   * Parse \a name according to \a pattern_ to extract the position of
    * the file according to the dimensions encoded in the filename.
    *
-   * \param[in]   name  The filename to parse. Should not include the path to 
+   * \param[in]   name  The filename to parse. Should not include the path to
    *                    the file.
    * \param[out]  pos   The position according to the dimension fields encoded
    *                    in \a name.  Only valid if the function returns true.
-   * \returns true on success, otherwise false.   
+   * \returns true on success, otherwise false.
    */
   bool parse(const std::string& name, TPos& pos)
-  { TRY(isok()); 
+  { TRY(isok());
     { unsigned p[10];
       RE2::Arg *args[10];
       TRY(ndim_<countof(args));
@@ -255,7 +255,7 @@ Error:
   /**
    * Generates a filename for writing corresponding to the position at \a ipos.
    * IMPORTANT: For writing ONLY.
-   * 
+   *
    * \param[out]  out   A std::string reference used for the output name.
    * \param[in]   ipos  A std::vector with the position of the filename.
    */
@@ -316,7 +316,7 @@ Error:
     struct dirent *ent;
     TRYMSG(dir=opendir(path_.c_str()),strerror(errno));
     while((ent=readdir(dir))!=NULL)
-    { TPos pos;      
+    { TPos pos;
       if(parse(ent->d_name,pos))
       { nd_t shape=get_file_shape(path_,ent->d_name);
         closedir(dir);
@@ -324,7 +324,7 @@ Error:
       }
     }
   Error:
-    return 0;  
+    return 0;
   }
 
   /**
@@ -333,7 +333,7 @@ Error:
    */
   bool find(std::string& out,TPos ipos)
   { TSeekTable::iterator it;
-    if(seektable_.empty()) 
+    if(seektable_.empty())
       TRY(build_seek_table_());
     TRY((it=seektable_.find(ipos))!=seektable_.end());
     out.clear();
@@ -360,7 +360,7 @@ Error:
     nd_t shape=0; // I wish I didn't have to get this each time
     TRYMSG(dir=opendir(path_.c_str()),strerror(errno));
     while((ent=readdir(dir))!=NULL)
-    { TPos pos;      
+    { TPos pos;
       if(parse(ent->d_name,pos))
       { unsigned out;
         TRY(file=openfile(path_,ent->d_name));
@@ -384,10 +384,10 @@ Error:
 
   private:
     /**
-     * Changes \a name if a pattern is found, but otherwise leaves it 
+     * Changes \a name if a pattern is found, but otherwise leaves it
      * untouched.
      * \returns true if a pattern is detected, otherwise false.
-     */ 
+     */
     bool gen_pattern_(std::string& name, const RE2& re, const char* repl)
     { while(RE2::Replace(&name,re,repl))
         ++ndim_;
@@ -397,7 +397,7 @@ Error:
 
     /**
      * Build seek table by searching through the \a path_ and locating parsable
-     * files.  The parsed positions are inserted into the \a seektable_.    
+     * files.  The parsed positions are inserted into the \a seektable_.
      * \returns true on success, otherwise false.
      */
     bool build_seek_table_()
@@ -431,7 +431,7 @@ static unsigned series_is_fmt(const char* path, const char *mode)
   // This doesn't cover all valid series names, but it does cover the ones
   // expected to be unique to this format.
   char t[1024];
-  std::string p(path);  
+  std::string p(path);
 #ifdef _MSC_VER
   GetFullPathName(path,1024,t,NULL); // normalizes slashes for windows
   p.assign(t);
@@ -454,17 +454,17 @@ static unsigned series_is_fmt(const char* path, const char *mode)
  *
  * 1. An example file from the series.
  *    The filename must conform to a prescribed pattern.
- * 
+ *
  *    For example: <tt>myfile.123.45.tif</tt>.
- *    This particular file would get loaded to position <tt>(...,123,45)</tt> 
- *    (where the elipses indicate the dimensions in the tif).  The series would 
- *    look for other tif files in the same directory with the same number of 
+ *    This particular file would get loaded to position <tt>(...,123,45)</tt>
+ *    (where the elipses indicate the dimensions in the tif).  The series would
+ *    look for other tif files in the same directory with the same number of
  *    fields.
  *
  * 2. A "pattern" filename where "%" symbols are used as placeholders for the
  *    dimension fields.
  *
- *     Example: <tt>myfile.%.%.tif</tt> would find/write files like the one 
+ *     Example: <tt>myfile.%.%.tif</tt> would find/write files like the one
  *              in the above example.
  *
  *     Example: <tt>1231%2353%351345.mp4</tt> would find/write files like
@@ -473,14 +473,14 @@ static unsigned series_is_fmt(const char* path, const char *mode)
  *
  * The number of dimensions to write to a series is infered from the filename.
  * All the examples above have use two dimensions in the series.  The container
- * used for individual members of the series must be able to hold the other 
+ * used for individual members of the series must be able to hold the other
  * dimensions.  If it can't, the write will fail.
- * 
+ *
  * \param[in]   path    File name as a null terminated string.
  * \param[in]   mode    Mode string: may be "r" or "w".
  * \returns 0 on error, otherwise a file context pointer.
  */
-static void* series_open(const char* path, const char* mode)
+static void* series_open(ndio_fmt_t *fmt, const char* path, const char* mode)
 { series_t *out=0;
   TRY(out=new series_t(path,mode));
   TRY(out->isok());
@@ -528,7 +528,7 @@ static unsigned series_read(ndio_t file,nd_t dst)
   struct dirent *ent;
   TPos mn,mx;
   TRY(self->minmax(mn,mx));
-  TRY(self->isr_);  
+  TRY(self->isr_);
   TRYMSG(dir=opendir(self->path_.c_str()),strerror(errno));
   while((ent=readdir(dir))!=NULL)
   { TPos v;
@@ -547,12 +547,12 @@ Error:
 }
 
 // helpers for the write function
-/// (for writing) set offset for writing a sub-array 
+/// (for writing) set offset for writing a sub-array
 static void setpos(nd_t src,const size_t o,const std::vector<size_t>& ipos)
 { for(size_t i=0;i<ipos.size();++i)
     ndoffset(src,(unsigned)(o+i),ipos[i]);
 }
-/// (for writing) Undo setpos() by negating the offset for writing a sub-array 
+/// (for writing) Undo setpos() by negating the offset for writing a sub-array
 static void unsetpos(nd_t src,const size_t o,const std::vector<size_t>& ipos)
 { for(size_t i=0;i<ipos.size();++i)
     ndoffset(src,(unsigned)(o+i),-(int64_t)ipos[i]);
@@ -661,7 +661,7 @@ static unsigned series_canseek(ndio_t file, size_t idim)
 #include "src/io/interface.h"
 /// Interface function for the ndio-series plugin.
 shared const ndio_fmt_t* ndio_get_format_api(void)
-{ 
+{
   static ndio_fmt_t api=
   { series_fmt_name,
     series_is_fmt,
@@ -670,13 +670,14 @@ shared const ndio_fmt_t* ndio_get_format_api(void)
     series_shape,
     series_read,
     series_write,
-    NULL, //set
-    NULL, //get
+    NULL, // set
+    NULL, // get
     series_canseek,
     series_seek,
-    NULL, //subarray
+    NULL, // subarray
+    NULL, // finalize format context
     ndioAddPlugin,
-    NULL 
+    NULL,0 // context, ref count
   };
   // make sure init happened ok
   //TRY(series_t::ptn_field.ok());
