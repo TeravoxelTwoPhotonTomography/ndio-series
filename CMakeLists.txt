@@ -8,6 +8,12 @@ endmacro()
 ################################################################################
 # CONFIG
 ################################################################################
+set(RPATH \$ORIGIN)
+if(APPLE)
+  set(RPATH @rpath)
+endif()
+set(CMAKE_INSTALL_RPATH ${RPATH})
+
 set(NDIO_SERIES_TEST_DATA_PATH ${PROJECT_SOURCE_DIR}/test/data)
 configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 include_directories(${PROJECT_BINARY_DIR})
@@ -19,6 +25,8 @@ include_directories(${ND_INCLUDE_DIRS})
 
 find_package(RE2 CONFIG PATHS cmake)
 include_directories(${RE2_INCLUDE_DIRS})
+
+find_package(Threads)
 
 ##############################################################################
 # SOURCE
@@ -33,7 +41,7 @@ file(GLOB HDRS src/*.h src/*.hh)
 
 add_definitions(-fPIC)
 add_library(ndio-series MODULE ${SRCS} ${HDRS})
-target_link_libraries(ndio-series libre2 ${ND_LIBRARIES})
+target_link_libraries(ndio-series libre2 ${ND_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 add_dependencies(ndio-series nd)
 
 ##############################################################################
@@ -42,7 +50,6 @@ add_dependencies(ndio-series nd)
 
 file(GLOB TEST_SOURCES test/*.cc)
 if(GTEST_FOUND)
-  find_package(Threads)
   enable_testing()
   include_directories(${PROJECT_SOURCE_DIR})
   include_directories(${GTEST_INCLUDE_DIR})

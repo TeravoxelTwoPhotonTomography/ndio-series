@@ -154,6 +154,10 @@ Error:
 // === CONTEXT CLASS ===
 //
 
+static  RE2 ptn_field("%+");  ///< Recognizes the "%" style filename patterns
+static  RE2 eg_field("\\.(\\d+)");   ///< Recognizes the "*.000.000.ext" example filename patterns.
+
+
 /**
  * File context for ndio-series.
  */
@@ -171,8 +175,6 @@ struct series_t
 
   TSeekTable seektable_;
 
-  RE2 ptn_field;  ///< Recognizes the "%" style filename patterns
-  RE2 eg_field;   ///< Recognizes the "*.000.000.ext" example filename patterns.
 
   /**
    * Opens a file series from the filename pattern in \a path
@@ -186,8 +188,8 @@ struct series_t
   , isw_(0)
   , last_(0)
   , fdim_(-1)
-  , ptn_field("%+")
-  , eg_field("\\.(\\d+)")
+  //, ptn_field("%+")
+  //, eg_field("\\.(\\d+)")
   { char t[1024];
     std::string p(path);
     size_t n;

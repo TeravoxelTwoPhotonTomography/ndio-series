@@ -32,7 +32,7 @@ file_table[] =
 
 struct Series:public testing::Test
 { void SetUp()
-  { ndioAddPluginPath(NDIO_BUILD_ROOT);
+  { ndioAddPluginPath("plugins");
   }
 };
 
@@ -142,7 +142,6 @@ TEST_F(Series,Write)
   }
 
   // Cleanup
-  if(vol && nddata(vol)) free(nddata(vol));
   ndfree(vol);
 }
 /// @endcond
