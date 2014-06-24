@@ -41,7 +41,11 @@ file(GLOB HDRS src/*.h src/*.hh)
 
 add_definitions(-fPIC)
 add_library(ndio-series MODULE ${SRCS} ${HDRS})
-target_link_libraries(ndio-series libre2 ${ND_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(ndio-series
+	libre2 
+	${ND_LIBRARIES} 
+	${CMAKE_THREAD_LIBS_INIT}
+	-FORCE) #force ok : multiply linked symbols on vs2012
 add_dependencies(ndio-series nd)
 
 ##############################################################################
