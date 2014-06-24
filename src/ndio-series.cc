@@ -36,7 +36,8 @@
 #include <string.h>
 #include <string>
 #include <vector>
-#include <re2/re2.h>
+#include <map>
+#include <tre/tre.h>
 #include <cerrno>
 #include <iostream>
 #include "nd.h"
@@ -150,13 +151,28 @@ Error:
   return shape;
 }
 
+/**
+Replace 
+*/
+static bool replace(std::string *str, const regex_t& pattern, const char* rewrite) {
+  regmatch_t match={0};
+  std::string out("");
+  const char *s=str->c_str();
+  const std::string r(rewrite);
+  bool any=0;
+  while(tre_regexec(&pattern,s,1,&match,0)==0) {
+    any=true;
+    out+=std::string(s,match.rm_so)+r;
+    s+=match.rm_eo;
+  }
+  if(any)
+    *str=out;
+  return any;
+}
+
 //
 // === CONTEXT CLASS ===
 //
-
-static  RE2 ptn_field("%+");  ///< Recognizes the "%" style filename patterns
-static  RE2 eg_field("\\.(\\d+)");   ///< Recognizes the "*.000.000.ext" example filename patterns.
-
 
 /**
  * File context for ndio-series.
@@ -175,6 +191,7 @@ struct series_t
 
   TSeekTable seektable_;
 
+  regex_t ptn_field_,eg_field_;
 
   /**
    * Opens a file series from the filename pattern in \a path
@@ -188,11 +205,11 @@ struct series_t
   , isw_(0)
   , last_(0)
   , fdim_(-1)
-  //, ptn_field("%+")
-  //, eg_field("\\.(\\d+)")
   { char t[1024];
     std::string p(path);
     size_t n;
+    TRY(tre_regcomp(&ptn_field_,"%+",REG_EXTENDED)==0);               ///< Recognizes the "%" style filename patterns
+    TRY(tre_regcomp(&eg_field_,"\\.([[:digit:]]+)",REG_EXTENDED)==0); ///< Recognizes the "*.000.000.ext" example filename patterns.
     TRY(parse_mode_string(mode,&isr_,&isw_));
 #ifdef _MSC_VER
     GetFullPathName(path.c_str(),1024,t,NULL); // normalizes slashes for windows
@@ -202,8 +219,8 @@ struct series_t
     { n=(n>=p.size())?0:n; // if not found set to 0
       path_=p.substr(0,n); // if PATHSEP not found will be ""
       std::string name((n==0)?p:p.substr(n+1));
-      if(!gen_pattern_(name,ptn_field,"(\\\\d+)"))
-        gen_pattern_(name,eg_field,".(\\\\d+)");
+      if(!gen_pattern_(name,ptn_field_,"([[:digit:]]+)"))
+        gen_pattern_(name,eg_field_,".([[:digit:]]+)");
 #if 0
       std::cout << "  INPUT: "<<path<<std::endl
                 << "   PATH: "<<path_<<std::endl
@@ -229,6 +246,26 @@ struct series_t
    * \returns true on success, otherwise false.
    */
   bool parse(const std::string& name, TPos& pos)
+#if 1
+  {
+    regmatch_t matches[10]={0};
+    regex_t ptn;
+    char* nm=(char*)(name.c_str());
+    TRY(tre_regcomp(&ptn,pattern_.c_str(),REG_EXTENDED)==0);
+    TRY(isok());
+    TRY((ndim_+1)<countof(matches));
+    TRY(tre_regexec(&ptn,nm,ndim_+1,matches,0)==0);
+    for(unsigned i=1;i<=ndim_;++i)
+    { char t=nm[matches[i].rm_eo];
+      nm[matches[i].rm_eo]='\0';
+      pos.push_back(atoi(nm+matches[i].rm_so));
+      nm[matches[i].rm_eo]=t;
+    }
+    return true;
+Error:
+    return false;
+  }
+#else
   { TRY(isok());
     { unsigned p[10];
       RE2::Arg *args[10];
@@ -253,6 +290,7 @@ struct series_t
 Error:
     return false;
   }
+#endif
 
   /**
    * Generates a filename for writing corresponding to the position at \a ipos.
@@ -267,8 +305,10 @@ Error:
     ipos.back()+=last_;
     //(*ipos.rend())+=last_;
     for (std::vector<size_t>::iterator it = ipos.begin(); it != ipos.end(); ++it)
-    { snprintf(buf,countof(buf),"%llu",(unsigned long long)*it);
-      TRY(RE2::Replace(&t,"\\(\\\\d\\+\\)",buf));
+    { regex_t ptn;
+      TRY(tre_regcomp(&ptn,"\\(\\\\d\\+\\)",0)==0);
+      snprintf(buf,countof(buf),"%llu",(unsigned long long)*it);
+      TRY(replace(&t,ptn,buf));
     }
     ipos.back()-=last_;
     out.clear();
@@ -390,8 +430,8 @@ Error:
      * untouched.
      * \returns true if a pattern is detected, otherwise false.
      */
-    bool gen_pattern_(std::string& name, const RE2& re, const char* repl)
-    { while(RE2::Replace(&name,re,repl))
+    bool gen_pattern_(std::string& name, const regex_t& re, const char* repl)
+    { while(replace(&name,re,repl))
         ++ndim_;
       if(ndim_) pattern_=name;
       return ndim_>0;

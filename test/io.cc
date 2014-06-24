@@ -36,7 +36,7 @@ file_table[] =
 
 struct Series:public testing::Test
 { void SetUp()
-  { ndioAddPluginPath("plugins");
+  { ndioAddPluginPath("");
   }
 };
 

@@ -5,6 +5,8 @@ macro(show v)
   message("${v} is ${${v}}")
 endmacro()
 
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
 ################################################################################
 # CONFIG
 ################################################################################
@@ -23,8 +25,7 @@ find_package(GTEST CONFIG PATHS cmake)
 find_package(ND CONFIG PATHS cmake)
 include_directories(${ND_INCLUDE_DIRS})
 
-find_package(RE2 CONFIG PATHS cmake)
-include_directories(${RE2_INCLUDE_DIRS})
+find_package(tre CONFIG PATHS cmake)
 
 find_package(Threads)
 
@@ -39,14 +40,17 @@ file(GLOB HDRS src/*.h src/*.hh)
 # TARGETS
 ##############################################################################
 
-add_definitions(-fPIC)
 add_library(ndio-series MODULE ${SRCS} ${HDRS})
-target_link_libraries(ndio-series
-	libre2 
-	${ND_LIBRARIES} 
-	${CMAKE_THREAD_LIBS_INIT}
-	-FORCE) #force ok : multiply linked symbols on vs2012
+target_link_libraries(ndio-series ${ND_LIBRARIES})
+	#-FORCE) #force ok : multiply linked symbols on vs2012
+target_add_tre(ndio-series)
 add_dependencies(ndio-series nd)
+
+function(target_add_dependencies tgt)
+  target_link_libraries(${tgt} ${ND_LIBRARIES})
+  target_add_tre(${tgt})
+  add_dependencies(${tgt} nd)
+endfunction()
 
 ##############################################################################
 #  Testing
@@ -69,6 +73,7 @@ if(GTEST_FOUND)
   install(TARGETS test-ndio-series EXPORT ndio-series-targets RUNTIME DESTINATION bin)
   gtest_copy_shared_libraries(test-ndio-series)
 endif()
+add_subdirectory(test2)
 
 ################################################################################
 #  Documentation
