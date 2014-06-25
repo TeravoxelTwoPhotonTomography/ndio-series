@@ -6,18 +6,20 @@ include(cmake/show.cmake)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 function(install_debug_symbols tgt loc)
-	# pdb files - msvc debugger - windows specifc
-	show(tgt)
-	show(loc)
+	# pdb files - msvc debugger - windows specific
 	if(MSVC)
-		#get_target_property(pdb ${tgt} PDB_NAME_DEBUG )
+		#get_target_property(pdb ${tgt} PDB_NAME_DEBUG ) # -- doesn't work
 		SET(pdb "${PROJECT_BINARY_DIR}/Debug/${tgt}.pdb")
-		show(pdb)
-		if(pdb)				
-			show(pdb)
+		if(pdb)
 			install(FILES ${pdb} DESTINATION ${loc} CONFIGURATIONS debug)
 		endif()  
 	endif()
+endfunction()
+
+function(target_add_dependencies tgt)
+  target_link_libraries(${tgt} ${ND_LIBRARIES})
+  target_add_tre(${tgt})
+  add_dependencies(${tgt} nd)
 endfunction()
 
 ################################################################################
@@ -33,12 +35,12 @@ set(NDIO_SERIES_TEST_DATA_PATH ${PROJECT_SOURCE_DIR}/test/data)
 configure_file(${PROJECT_SOURCE_DIR}/config.h.in ${PROJECT_BINARY_DIR}/config.h)
 include_directories(${PROJECT_BINARY_DIR})
 
-find_package(GTEST CONFIG PATHS cmake)
+find_package(GTEST PATHS cmake)
 
-find_package(ND CONFIG PATHS cmake)
+find_package(ND PATHS cmake)
 include_directories(${ND_INCLUDE_DIRS})
 
-find_package(tre CONFIG PATHS cmake)
+find_package(tre PATHS cmake)
 
 find_package(Threads)
 
@@ -54,16 +56,12 @@ file(GLOB HDRS src/*.h src/*.hh)
 ##############################################################################
 
 add_library(ndio-series MODULE ${SRCS} ${HDRS})
-target_link_libraries(ndio-series ${ND_LIBRARIES})
-	#-FORCE) #force ok : multiply linked symbols on vs2012
-target_add_tre(ndio-series)
-add_dependencies(ndio-series nd)
+target_add_dependencies(ndio-series)
+#target_link_libraries(ndio-series ${ND_LIBRARIES})
+#target_add_tre(ndio-series)
+#add_dependencies(ndio-series nd)
 
-function(target_add_dependencies tgt)
-  target_link_libraries(${tgt} ${ND_LIBRARIES})
-  target_add_tre(${tgt})
-  add_dependencies(${tgt} nd)
-endfunction()
+
 
 ##############################################################################
 #  Testing
