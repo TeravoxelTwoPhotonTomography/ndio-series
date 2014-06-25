@@ -152,22 +152,23 @@ Error:
 }
 
 /**
-Replace 
+Replace - returns number of replacements
 */
-static bool replace(std::string *str, const regex_t& pattern, const char* rewrite) {
+static int replace(std::string *str, const regex_t& pattern, const char* rewrite) {
   regmatch_t match={0};
   std::string out("");
   const char *s=str->c_str();
   const std::string r(rewrite);
-  bool any=0;
-  while(tre_regexec(&pattern,s,1,&match,0)==0) {
-    any=true;
+  int n=0;
+  while(tre_regexec(&pattern,s,1,&match,0)==0) {    
     out+=std::string(s,match.rm_so)+r;
     s+=match.rm_eo;
+    ++n;
   }
-  if(any)
+  out+=std::string(s); // add any remainder
+  if(n)
     *str=out;
-  return any;
+  return n;
 }
 
 //
@@ -254,14 +255,15 @@ struct series_t
     TRY(tre_regcomp(&ptn,pattern_.c_str(),REG_EXTENDED)==0);
     TRY(isok());
     TRY((ndim_+1)<countof(matches));
-    TRY(tre_regexec(&ptn,nm,ndim_+1,matches,0)==0);
-    for(unsigned i=1;i<=ndim_;++i)
-    { char t=nm[matches[i].rm_eo];
-      nm[matches[i].rm_eo]='\0';
-      pos.push_back(atoi(nm+matches[i].rm_so));
-      nm[matches[i].rm_eo]=t;
+    if(tre_regexec(&ptn,nm,ndim_+1,matches,0)==0) 
+    { for(unsigned i=1;i<=ndim_;++i)
+      { char t=nm[matches[i].rm_eo];
+        nm[matches[i].rm_eo]='\0';
+        pos.push_back(atoi(nm+matches[i].rm_so));
+        nm[matches[i].rm_eo]=t;
+      }    
+      return true;
     }
-    return true;
 Error:
     return false;
   }
@@ -431,8 +433,8 @@ Error:
      * \returns true if a pattern is detected, otherwise false.
      */
     bool gen_pattern_(std::string& name, const regex_t& re, const char* repl)
-    { while(replace(&name,re,repl))
-        ++ndim_;
+    { 
+      ndim_=replace(&name,re,repl);
       if(ndim_) pattern_=name;
       return ndim_>0;
     }

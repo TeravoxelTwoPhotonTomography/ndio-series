@@ -34,9 +34,22 @@ file_table[] =
   {0}
 };
 
+static int once=0;
+
 struct Series:public testing::Test
 { void SetUp()
-  { ndioAddPluginPath("");
+  { if(!once) {
+#if 0
+    /* for running from build */
+      ndioAddPluginPath("");
+      ndioAddPluginPath(NDIO_INSTALL_PATH "/bin/plugins");
+#else 
+    /* for running from install */
+      ndioAddPluginPath("../plugins");      
+#endif
+      ndioPreloadPlugins();
+      once=1;
+    }
   }
 };
 

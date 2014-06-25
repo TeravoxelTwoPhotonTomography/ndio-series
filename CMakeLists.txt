@@ -1,11 +1,24 @@
 cmake_minimum_required(VERSION 2.8)
 project(ndio-series-plugin)
 
-macro(show v)
-  message("${v} is ${${v}}")
-endmacro()
+include(cmake/show.cmake)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
+
+function(install_debug_symbols tgt loc)
+	# pdb files - msvc debugger - windows specifc
+	show(tgt)
+	show(loc)
+	if(MSVC)
+		#get_target_property(pdb ${tgt} PDB_NAME_DEBUG )
+		SET(pdb "${PROJECT_BINARY_DIR}/Debug/${tgt}.pdb")
+		show(pdb)
+		if(pdb)				
+			show(pdb)
+			install(FILES ${pdb} DESTINATION ${loc} CONFIGURATIONS debug)
+		endif()  
+	endif()
+endfunction()
 
 ################################################################################
 # CONFIG
@@ -70,7 +83,8 @@ if(GTEST_FOUND)
   add_dependencies(test-ndio-series gtest nd)
   gtest_copy_shared_libraries(test-ndio-series)
   add_test(TestNDIOSeries test-ndio-series)
-  install(TARGETS test-ndio-series EXPORT ndio-series-targets RUNTIME DESTINATION bin)
+  install(TARGETS test-ndio-series EXPORT ndio-series-targets RUNTIME DESTINATION bin/test)
+  install_debug_symbols(test-ndio-series bin/test)
   gtest_copy_shared_libraries(test-ndio-series)
 endif()
 add_subdirectory(test2)
@@ -98,11 +112,11 @@ endif()
 ##############################################################################
 
 foreach(_path ${NDIO_PLUGIN_PATH})
-  install(TARGETS ndio-series LIBRARY DESTINATION ${_path})
+  install(TARGETS ndio-series DESTINATION ${_path})
 endforeach()
-install(TARGETS ndio-series EXPORT ndio-series-targets LIBRARY DESTINATION bin/plugins)
-install(EXPORT ndio-series-targets DESTINATION cmake)
-export(TARGETS ndio-series FILE ndio-series-config.cmake)
+install(TARGETS ndio-series DESTINATION bin/plugins)
 export(PACKAGE ndio-series)
+install_debug_symbols(ndio-series bin/plugins)
+
 
 
