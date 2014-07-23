@@ -307,8 +307,8 @@ Error:
     ipos.back()+=last_;
     //(*ipos.rend())+=last_;
     for (std::vector<size_t>::iterator it = ipos.begin(); it != ipos.end(); ++it)
-    { regex_t ptn;
-      TRY(tre_regcomp(&ptn,"\\(\\\\d\\+\\)",0)==0);
+    { regex_t ptn;      
+      TRY(tre_regcomp(&ptn,"(\\[\\[:digit:\\]\\]\\+)",0)==0); //"\\(\\\\d\\+\\)"
       snprintf(buf,countof(buf),"%llu",(unsigned long long)*it);
       TRY(replace(&t,ptn,buf));
     }
@@ -572,6 +572,7 @@ static unsigned series_read(ndio_t file,nd_t dst)
   struct dirent *ent;
   TPos mn,mx;
   TRY(self->minmax(mn,mx));
+  TRYMSG(mn.size()>0,"Could not find files that matched the file series pattern.");
   TRY(self->isr_);
   TRYMSG(dir=opendir(self->path_.c_str()),strerror(errno));
   while((ent=readdir(dir))!=NULL)
@@ -629,10 +630,10 @@ static unsigned series_write(ndio_t file, nd_t src)
   o=ndndim(src)-1;
   do
   { setpos(src,o,ipos);
-    ndreshape(src,(unsigned)(o-self->ndim_+1),ndshape(src)); // drop dimensionality
+    ndsetndim(src,o-self->ndim_+1);  // drop dimensionality
     TRY(self->makename(outname,ipos));
     ndioClose(ndioWrite(ndioOpen(outname.c_str(),NULL,"w"),src));
-    ndreshape(src,(unsigned)(o+1),ndshape(src));             // restory dimensionality
+    ndsetndim(src,o+1);              // restore dimensionality
     unsetpos(src,o,ipos);
   } while (inc(src,o,ipos));
   self->last_+=ipos.back();
